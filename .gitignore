@@ -10,7 +10,6 @@
 .vscode/
 
 # Screenshots - keep local only
-notes/screenshots/
 
 # Secrets
 .env
