@@ -1,1 +1,18 @@
+﻿# Build artifacts
 *.class
+**/out/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# Screenshots - keep local only
+notes/screenshots/
+
+# Secrets
+.env
+**/kubeconfig*
+**/*secret*
