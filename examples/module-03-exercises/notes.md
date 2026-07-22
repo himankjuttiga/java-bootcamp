@@ -22,3 +22,20 @@
 **Why should Account, rather than Main, decide whether a withdrawal is valid?**
 
 Account owns the balance and is the only class that should be allowed to change it. If Main validated withdrawals directly, that business rule would live outside the object responsible for the data, making it easy for another part of the program to bypass the check and corrupt the balance. Keeping validation inside Account means the rule is enforced no matter where the withdrawal request comes from, and Main can stay a thin coordinator that just relays user input.
+
+
+## Exercise 3 Notes
+## Step 5 - Polymorphic Call Explanation
+
+For the second loop iteration:
+- Reference type: Account
+- Object type: CurrentAccount
+- Method chosen: CurrentAccount.withdraw
+
+Even though the array is typed as Account[], each element still
+remembers its real object type at runtime. When account.withdraw(20.00)
+is called, Java looks at the actual object (CurrentAccount), not the
+reference type (Account), and runs CurrentAccount's overridden withdraw
+method instead of Account's. This is runtime polymorphism - the method
+that executes depends on the object's real type, decided while the
+program is running, not at compile time.
