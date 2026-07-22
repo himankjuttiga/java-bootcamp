@@ -39,3 +39,36 @@ reference type (Account), and runs CurrentAccount's overridden withdraw
 method instead of Account's. This is runtime polymorphism - the method
 that executes depends on the object's real type, decided while the
 program is running, not at compile time.
+
+## Exercise 6 Notes 
+## SRP spot-check
+The original method could change because the formula changes or because
+the output format changes. These are separate responsibilities.
+
+Main should manage menu input, BankService should coordinate banking
+operations, and domain classes should protect their own state.
+
+## Exercise 7 Notes
+## SOLID Spot-Check
+
+**O — Open/Closed:** Adding FrozenAccount required creating a new class
+only — SavingsAccount, CurrentAccount, and Account itself needed no changes.
+
+**L — Liskov Substitution:** FrozenAccount can be used anywhere an Account
+is expected because it still returns a boolean and leaves balance unchanged
+on failure, matching what the loop already expects, instead of throwing an
+unexpected exception.
+
+**I — Interface Segregation:** If Printable also required sendEmailReceipt(),
+every class implementing Printable (like SavingsAccount) would be forced to
+implement an email method it has no use for, violating the idea that classes
+shouldn't be forced to depend on methods they don't need.
+
+**D — Dependency Inversion:** Declaring Account account = new FrozenAccount(100.00)
+keeps the code depending on the Account abstraction rather than the concrete
+FrozenAccount type, so the concrete class can be swapped later without
+changing any code that uses the account variable.
+
+## Five SOLID Letters
+Single Responsibility, Open/Closed, Liskov Substitution, Interface
+Segregation, Dependency Inversion.
