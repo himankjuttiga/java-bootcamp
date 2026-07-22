@@ -4,7 +4,7 @@ HelloWorld.class = bytecode file the JVM executes
 javac created the .class from the .java
 
 ## Step 4 - Bytecode Inspection
-![javap HelloWorld](../screenshots/lab-1/helloworld.png)
+![javap HelloWorld](screenshots/lab-1/helloworld.png)
 
 Key opcodes in HelloWorld:
 - getstatic: gets System.out from the heap
@@ -13,7 +13,7 @@ Key opcodes in HelloWorld:
 - return: exits the method
 - 
 ## Step 5 & 6 - Calculator + Bytecode
-![javap Calculator](screenshots/lab-1/calculator-output.png)
+![javap Calculator](screenshots/lab-1/calendar-output.png)
 
 Key opcodes in Calculator:
 - iload: loads integer variable onto operand stack

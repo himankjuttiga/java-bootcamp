@@ -12,20 +12,22 @@ public class Main {
             studentManager.displayMenu();
 
             String choiceInput = scanner.nextLine().trim();
-            if (choiceInput.isEmpty()) {
+
+            // check every character is a digit
+            boolean choiceValid = !choiceInput.isEmpty();
+            for (int i = 0; i < choiceInput.length(); i++) {
+                char c = choiceInput.charAt(i);
+                if (c < '0' || c > '9') {
+                    choiceValid = false;
+                }
+            }
+            if (!choiceValid) {
                 System.out.println("Invalid Input");
                 System.out.println("Please Try Again.");
                 continue;
             }
 
-            int choice;
-            try {
-                choice = Integer.parseInt(choiceInput);
-            } catch (NumberFormatException ex) {
-                System.out.println("Invalid Input");
-                System.out.println("Please Try Again.");
-                continue;
-            }
+            int choice = Integer.parseInt(choiceInput);
 
             switch (choice) {
                 case 1 -> studentManager.addStudent();
