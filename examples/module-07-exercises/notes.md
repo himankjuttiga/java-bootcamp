@@ -1,0 +1,4 @@
+- Skip & Continue: importing 10,000 CSV rows. One bad row should not stop the other 9,999.
+- Fail Fast: a required config value is missing at startup, do not go along with a null.
+- Graceful Degradation: if a recommendations service is down then show the page without recommendations instead of a 500 error.
+- Circuit Breaker: if a downstream payment API is timing out repeatedly then stop hammering it and fail fast for a cooldown period.
