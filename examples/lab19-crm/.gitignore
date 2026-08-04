@@ -1,0 +1,8 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.iml
+.idea/
+# never commit downloaded browser drivers or profiles
+.cache/
+chromedriver*
+*.png
