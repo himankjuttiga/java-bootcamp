@@ -1,0 +1,5 @@
+# lab-only teaser — Lab 26 deepens profiles. Do not put real secrets here.
+logging:
+  level:
+    root: DEBUG
+    com.northstar.crm: DEBUG
