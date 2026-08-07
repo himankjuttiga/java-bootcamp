@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: northstar-crm
+  profiles:
+    # Default to dev locally; override with -Dspring-boot.run.profiles or SPRING_PROFILES_ACTIVE
+    default: dev
+server:
+  port: 8080
+northstar:
+  integration:
+    # Base defaults only — no prod secrets here. Bound via NorthstarIntegrationProperties.
+    api-base-url: http://localhost:9090
+    connect-timeout-ms: 2000
