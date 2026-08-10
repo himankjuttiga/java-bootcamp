@@ -1,0 +1,44 @@
+# Lab 27 starter — timed path (~45 minutes)
+
+**Theme:** @Transactional TransferService — atomic debit/credit/log with rollback proof
+
+## Activity card
+
+| | |
+| --- | --- |
+| **Objective** | Complete transfer TX TODOs and prove ACC-FORCE-FAIL rollback |
+| **Skills practiced** | Service @Transactional, TransactionLog, ACID evidence notes |
+| **Expected outcome** | Happy MAIN→LOYALTY · forced-fail unchanged MAIN · acid-notes filled |
+| **Estimated time** | ~45 minutes |
+| **Files** | `examples/lab27-crm/` copied from this starter |
+
+**Boilerplate reduced:** Accounts + TransferService stubs + `// TODO` — review AI drafts for TX safety.
+
+## 45-minute checklist
+
+- [ ] Add `@Transactional` on `TransferService.transfer` (service boundary)
+- [ ] Implement debit/credit + `TransactionLog` write inside the TX (debit then force-fail is OK)
+- [ ] Force rollback when destination is `ACC-FORCE-FAIL` → HTTP **500** (no ExceptionHandler)
+- [ ] Controller returns HTTP **200** `{"status":"OK"}` (not 204)
+- [ ] Complete tests: `forceFailRollsBack` + `happyPathMovesFunds` (**Tests run: 2**)
+- [ ] Fill ACID table in `docs/acid-notes.md`
+- [ ] Smoke: happy MAIN→LOYALTY; failure leaves MAIN unchanged
+
+## Smoke test
+
+```bash
+mvn -B test
+# Tests run: 2
+mvn -B spring-boot:run
+```
+
+Evidence under `~/java-bootcamp/notes/screenshots/lab-27/` (redact secrets).
+
+## Timed-path Pass criteria
+
+| Criterion | Pass / Fail |
+| --------- | ----------- |
+| Happy transfer updates both balances + log | Pass / Fail |
+| Forced fail rolls back (no log row / MAIN unchanged) | Pass / Fail |
+| `@Transactional` on service method (not controller) | Pass / Fail |
+| ACID notes cite evidence | Pass / Fail |
