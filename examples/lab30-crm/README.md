@@ -1,0 +1,37 @@
+# Lab 30 starter — timed path (~45 minutes)
+
+**Theme:** Kafka EDA — topics, keys, producer
+
+## Activity card
+
+| | |
+| --- | --- |
+| **Checkpoint** | **E** |
+| **Must prove** | Broker · 3-partition topic + DLQ · keyed produce · acks=all |
+| **Hard gate** | Pre-lab Pass · Docker/shared bootstrap |
+
+## 45-minute checklist
+
+- [ ] Start KRaft broker (`compose.yaml`) or use instructor shared bootstrap
+- [ ] Create topics `crm.customer-events.v1` (3 partitions) + `.dlq`
+- [ ] Complete event JSON samples for CUS-1001 / CUS-1002
+- [ ] Fill `CustomerEventProducer` TODOs (acks=all, idempotence, key=customerId)
+- [ ] Run smoke produce; note partition/offset; fill `docs/kafka-notes.md`
+
+## Smoke test
+
+```bash
+docker compose up -d
+# then: mvn -B -q package && mvn -B exec:java -Dexec.mainClass=com.northstar.crm.event.CustomerEventProducer
+```
+
+Evidence under `~/java-bootcamp/notes/screenshots/lab-30/` (redact secrets).
+
+## Timed-path Pass criteria
+
+| Criterion | Pass / Fail |
+| --------- | ----------- |
+| Broker up; topics describe (3 partitions on events) | Pass / Fail |
+| Keyed produce for CUS-1001 / CUS-1002 succeeds | Pass / Fail |
+| Producer uses acks=all + enable.idempotence | Pass / Fail |
+| kafka-notes.md has produce->consume + keying notes | Pass / Fail |
