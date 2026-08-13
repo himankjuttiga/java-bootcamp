@@ -1,0 +1,6 @@
+body { font-family: system-ui, sans-serif; margin: 1.5rem; }
+.card { border: 1px solid #ccc; padding: 0.75rem; margin: 0.5rem 0; }
+.badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600; }
+.badge--prospect { background: #e0e7ff; color: #1e1b4b; }
+.badge--active { background: #dcfce7; color: #14532d; }
+.badge--closed { background: #f3f4f6; color: #374151; }
