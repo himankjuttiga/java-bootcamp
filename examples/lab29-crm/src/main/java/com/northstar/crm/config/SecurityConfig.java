@@ -8,11 +8,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.Customizer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 public class SecurityConfig {
@@ -27,6 +29,7 @@ public class SecurityConfig {
   @Profile("!lab35")
   SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
     http.cors(Customizer.withDefaults())
+        .headers(SecurityConfig::browserHardening)
         .csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
@@ -59,6 +62,7 @@ public class SecurityConfig {
   @Profile("lab35")
   SecurityFilterChain lab35DevFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
     http.cors(Customizer.withDefaults())
+        .headers(SecurityConfig::browserHardening)
         .csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
@@ -77,5 +81,24 @@ public class SecurityConfig {
         .formLogin(form -> form.disable())
         .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
+  }
+
+  /**
+   * Lab 36 — browser security headers on every API response.
+   *
+   * CSP is defence in depth, not the control: correct escaping in the SPA is what stops XSS.
+   * The API serves JSON only, so the policy can be maximally restrictive here.
+   * frame-ancestors 'none' blocks clickjacking; nosniff stops content-type guessing;
+   * no-referrer keeps customer ids out of outbound Referer headers.
+   *
+   * Production adds HSTS over HTTPS: Strict-Transport-Security: max-age=31536000; includeSubDomains.
+   */
+  private static void browserHardening(HeadersConfigurer<HttpSecurity> headers) {
+    headers
+        .contentSecurityPolicy(csp ->
+            csp.policyDirectives("default-src 'none'; frame-ancestors 'none'; object-src 'none'"))
+        .referrerPolicy(referrer ->
+            referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+        .frameOptions(frame -> frame.deny());
   }
 }
