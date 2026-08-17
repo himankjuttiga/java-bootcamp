@@ -4,6 +4,8 @@ import com.northstar.crm.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.config.Customizer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -20,14 +22,50 @@ public class SecurityConfig {
     return new BCryptPasswordEncoder();
   }
 
+  /** Default profile: Lab 28/29 rules unchanged, customer APIs require a Bearer token. */
   @Bean
+  @Profile("!lab35")
   SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
-    http.csrf(csrf -> csrf.disable())
+    http.cors(Customizer.withDefaults())
+        .csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/login", "/actuator/health", "/error").permitAll()
             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .requestMatchers("/api/customers/**").hasAnyRole("AGENT", "ADMIN")
+            .requestMatchers("/api/admin/**").hasRole("ADMIN")
+            .anyRequest().authenticated())
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((request, response, authException) ->
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+            .accessDeniedHandler((request, response, accessDeniedException) ->
+                response.sendError(HttpServletResponse.SC_FORBIDDEN)))
+        .httpBasic(basic -> basic.disable())
+        .formLogin(form -> form.disable())
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+    return http.build();
+  }
+
+  /**
+   * Lab 35 profile only: the React SPA has no login screen yet (Lab 36 adds tokens and route
+   * guards), so customer reads and writes are open while the frontend/API contract is wired.
+   *
+   * Run with: mvn spring-boot:run -Dspring-boot.run.profiles=lab35
+   *
+   * The default profile above keeps the Lab 29 role rules and its no-token 401 test green,
+   * so this concession is scoped and reversible instead of a permanent hole.
+   */
+  @Bean
+  @Profile("lab35")
+  SecurityFilterChain lab35DevFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    http.cors(Customizer.withDefaults())
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/api/auth/login", "/actuator/health", "/error").permitAll()
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            // TODO Lab 36: restore .hasAnyRole("AGENT", "ADMIN") once the SPA sends a token.
+            .requestMatchers("/api/customers/**").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .exceptionHandling(ex -> ex

@@ -1,0 +1,30 @@
+import type { CustomerDraft } from '../types/customer'
+
+export type FieldErrors = Partial<Record<keyof CustomerDraft, string>>
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * Client validation is a courtesy, not a guarantee: the same rules are enforced
+ * by Spring (@NotBlank/@Email), and a 400 from the server is mapped onto these
+ * same field keys so both paths render identically.
+ */
+export function validateCustomerDraft(draft: CustomerDraft): FieldErrors {
+  const errors: FieldErrors = {}
+
+  if (!draft.fullName.trim()) {
+    errors.fullName = 'Full name is required.'
+  }
+
+  if (!draft.email.trim()) {
+    errors.email = 'Email is required.'
+  } else if (!EMAIL_PATTERN.test(draft.email.trim())) {
+    errors.email = 'Enter a valid email address.'
+  }
+
+  if (!draft.status) {
+    errors.status = 'Status is required.'
+  }
+
+  return errors
+}
