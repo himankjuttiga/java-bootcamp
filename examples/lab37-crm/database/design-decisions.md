@@ -1,0 +1,118 @@
+# Lab 37 — Design decisions
+
+## public_id vs surrogate key
+
+Two identifiers, on purpose.
+
+| Identifier | Type | Role |
+| --- | --- | --- |
+| `customer_id` | `BIGSERIAL` | internal surrogate. Every foreign key points here. Never leaves the database |
+| `public_id` | `VARCHAR(32)` UNIQUE | immutable business id, `CUS-1001`. What the API and the React SPA use |
+| `email` | `VARCHAR(320)` UNIQUE | unique lookup key, not an identity |
+| `account_number` | `VARCHAR(32)` UNIQUE | business identifier for an account |
+
+Email is unique, so it is tempting as a primary key. It fails because it is **mutable**. When a
+customer corrects their address, every child row keyed on the old value needs rewriting and every
+foreign key either cascades a mass update or breaks. Old addresses also get reused. A surrogate
+never changes, so identity survives every correction to the data around it.
+
+`public_id` sits between the two: stable enough to publish and to print on a ticket, but still not
+what foreign keys reference, so a future decision to renumber public ids stays a one-table change.
+
+Seed scripts resolve parents by `public_id`, never by a hardcoded `customer_id`, because
+`BIGSERIAL` values depend on how many times the script has run.
+
+## Constraints
+
+Every constraint is named. An unnamed constraint gets a generated name that differs between
+machines, which makes the error message useless to the application (`uk_customer_email` tells the
+API which field to flag, `customer_check1` tells it nothing) and makes migrations that
+`DROP CONSTRAINT` unreliable.
+
+| Constraint | Table | Protects against |
+| --- | --- | --- |
+| `pk_customer`, `pk_account`, `pk_address`, `pk_cust_status_hist` | all | duplicate rows, no identity |
+| `uk_customer_public` | customer | two customers claiming `CUS-1001` |
+| `uk_customer_email` | customer | duplicate accounts for one person |
+| `uk_account_number` | account | two accounts sharing a number |
+| `ck_customer_status` | customer | a status outside `PROSPECT`, `ACTIVE`, `CLOSED` |
+| `ck_account_balance` | account | negative balances |
+| `ck_address_type` | address | an address type the UI cannot render |
+| `ck_hist_new_status` | history | an audit row recording a status that cannot exist |
+| `fk_account_customer` | account | orphan accounts, and deleting a customer who owns one |
+| `fk_address_customer` | address | orphan addresses |
+| `fk_hist_customer` | history | audit rows about customers that do not exist |
+
+The status set matches the SPA's `CustomerStatus` union from Labs 34 to 36. Two places define the
+same set, so the CHECK is the authoritative one: the UI can be bypassed, the database cannot.
+
+## Money and time
+
+`balance_cents BIGINT`, exact integer minor units. Never `FLOAT` or `DOUBLE PRECISION`: binary
+floating point cannot represent 0.10 exactly, so balances drift as soon as you add them. The
+GUIDE's extended track uses `NUMERIC(19,2)`, which is equally exact; both are correct, and the
+timed-path starter pins cents.
+
+`TIMESTAMPTZ` everywhere, never bare `TIMESTAMP`. A plain timestamp drops the offset, so 5pm in
+Toronto and 5pm in London become indistinguishable and daylight saving makes an hour of history
+ambiguous.
+
+## History is append-only
+
+`customer_status_history` rows are inserted, never updated. Updating a history row in place turns
+an audit trail into a record of the present, which is exactly what an audit trail is not for. The
+`correlation_id` column carries `lab-request-001`, so a status change can be traced back to the
+API request that caused it, joining this table to the Spring logs from Lab 29 onward.
+
+## Indexes
+
+PostgreSQL creates an index for every primary key and every UNIQUE constraint automatically. It
+does **not** index the referencing side of a foreign key. Three indexes are therefore explicit:
+
+* `ix_account_customer`, `ix_address_customer` — without them, every `DELETE` or key `UPDATE` on
+  `customer` forces a sequential scan of the child table to check the constraint, and every
+  "accounts for this customer" lookup scans too.
+* `ix_history_customer_time` on `(customer_id, changed_at)` — the timeline query is "this
+  customer's transitions in order", so the composite matches both the filter and the sort.
+
+No index was added on `public_id` or `email`: `uk_customer_public` and `uk_customer_email` already
+create one, and a duplicate index costs writes while helping nothing.
+
+## Track choice: timed path
+
+The starter and the GUIDE describe two different schemas, and the GUIDE says not to mix them.
+This lab follows the **starter contract**, which is what the timed path grades:
+
+| Column | Used here (starter) | GUIDE extended track |
+| --- | --- | --- |
+| email | `email` | `email_normalized` |
+| money | `balance_cents BIGINT` | `balance NUMERIC(19,2)` |
+| status set | `PROSPECT`, `ACTIVE`, `CLOSED` | adds `SUSPENDED` |
+| surrogate | `BIGSERIAL` | `BIGINT GENERATED BY DEFAULT AS IDENTITY` |
+
+`ADDRESS` and `CUSTOMER_STATUS_HISTORY` are added from the GUIDE because deliverable 4 requires
+all four tables. Those tables are not part of the disputed column contract, so adding them mixes
+nothing. `BIGSERIAL` and `GENERATED BY DEFAULT AS IDENTITY` are equivalent in behaviour here;
+identity is the modern standard and would be the choice on a greenfield schema.
+
+## Error codes are PostgreSQL, not Oracle
+
+The GUIDE quotes Oracle codes (`ORA-02290`, `ORA-00001`, `ORA-02291`) inherited from an earlier
+version of this course. PostgreSQL uses SQLSTATE:
+
+| SQLSTATE | Condition | Oracle equivalent in the GUIDE |
+| --- | --- | --- |
+| `23514` | check_violation | ORA-02290 |
+| `23505` | unique_violation | ORA-00001 |
+| `23503` | foreign_key_violation | ORA-02291 |
+| `23502` | not_null_violation | ORA-01400 |
+
+`05_drop.sql` uses plain `DROP TABLE`, not Oracle's `CASCADE CONSTRAINTS PURGE`, which does not
+exist in PostgreSQL.
+
+## Security
+
+`crm_app` has `LOGIN` and owns only its own schema. No `SUPERUSER`, no `CREATEDB`, no `CREATEROLE`.
+An application credential with DBA rights turns a single SQL injection into total loss. The
+password is passed to `psql` as a variable from `.env`, which is gitignored; no password appears
+in any committed `.sql` file. Seeds use `example.com` addresses, never real PII.
