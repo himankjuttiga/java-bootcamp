@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: lab39-crm
+  datasource:
+    # Credentials come from the environment, never from this file. .env is gitignored;
+    # .env.example carries placeholders only. A password committed here would live in the
+    # repository history permanently, so the fix would be rotation, not a later delete.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/crm}
+    username: ${SPRING_DATASOURCE_USERNAME:crm}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      # Flyway owns the schema. Hibernate only checks that the entities agree with it and
+      # refuses to start when they do not: mapping drift becomes a boot failure, not a 3am
+      # surprise. Never create, create-drop or update in a shared environment.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  data:
+    web:
+      pageable:
+        max-page-size: 100
+        default-page-size: 20
+
+logging:
+  level:
+    org.flywaydb: INFO
