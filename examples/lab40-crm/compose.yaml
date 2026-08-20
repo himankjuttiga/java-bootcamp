@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: crm-postgres
+    ports: ["5432:5432"]
+    environment:
+      # Values come from .env, which is gitignored. The defaults keep the file runnable for a
+      # reviewer without handing anyone a credential that works anywhere real.
+      POSTGRES_USER: ${POSTGRES_USER:-crm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      POSTGRES_DB: ${POSTGRES_DB:-crm}
+    volumes:
+      - crm_pgdata:/var/lib/postgresql/data
+
+volumes:
+  crm_pgdata:
