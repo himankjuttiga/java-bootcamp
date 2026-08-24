@@ -86,7 +86,7 @@ class ObjectOwnershipSecurityTest {
   @WithMockUser(username = AGENT_A, roles = "AGENT")
   void agentCanReadTheirOwnCustomer() throws Exception {
     mvc.perform(get("/api/customers/{publicId}", "CUS-1001").header("X-Correlation-Id", CORRELATION))
-        .andExpect(status().isForbidden())
+        .andExpect(status().isOk())
         .andExpect(jsonPath("$.publicId").value("CUS-1001"));
   }
 
