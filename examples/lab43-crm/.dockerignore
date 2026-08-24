@@ -1,0 +1,13 @@
+# Keep build context small and secret-free
+target/
+.git/
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+*.log
+reports/
+**/node_modules/
+notes/
+notes/screenshots/
