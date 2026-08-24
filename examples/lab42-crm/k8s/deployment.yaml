@@ -14,10 +14,15 @@ spec:
       labels:
         app: crm-api
     spec:
+      # k3s PodSecurity often needs an explicit non-root UID at pod level too.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
       containers:
         - name: crm-api
-          # Digest-pinned image from Lab 41 (not :latest)
-          image: crm-api@sha256:707a818adce2900b1aa0f0158cd1dd7fa1c1a961914fefe0476672ff069abe21
+          # Lab 41 image imported into k3d by tag. RepoDigests is empty until the image is
+          # pushed to a registry, so there is no @sha256 to pin for a local-only image.
+          image: crm-api:lab41
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

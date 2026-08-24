@@ -9,7 +9,9 @@ data:
   # Non-secret config only. Passwords live in the Secret (crm-api-secrets).
   SPRING_PROFILES_ACTIVE: "docker"
   SERVER_PORT: "8080"
-  CRM_DB_HOST: "crm-postgres"
+  # From a k3d pod the host-published Postgres is host.k3d.internal (not crm-postgres,
+  # which only resolves on the docker compose network). Isolated db for this lab.
+  CRM_DB_HOST: "host.k3d.internal"
   CRM_DB_PORT: "5432"
-  CRM_DB_NAME: "crm_lab40"
+  CRM_DB_NAME: "crm_lab42"
   CRM_DB_USER: "crm"

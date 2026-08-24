@@ -2,42 +2,62 @@
 
 ## Prerequisites
 
-- kubeconfig for instructor k3s (not in Git)
-- Namespace: `<your-namespace>` (assigned per student)
-- Image digest from Lab 41: `crm-api@sha256:707a818adce2900b1aa0f0158cd1dd7fa1c1a961914fefe0476672ff069abe21`
+- Local k3d cluster `lab42` on k3s `v1.28.15-k3s1`, load balancer `8088:80`.
+- Namespace: `crm-training`.
+- Lab 41 image `crm-api:lab41` imported into k3d (`k3d image import crm-api:lab41 -c lab42`).
+  RepoDigests is empty for a never-pushed local image, so I reference it by tag with
+  `imagePullPolicy: IfNotPresent`, not by `@sha256`.
+- Postgres reachable from a pod at `host.k3d.internal:5432`, database `crm_lab42`, user `crm`.
 
 ## Apply
 
 ```bash
-# Validate first (client-side, no cluster needed):
-kubectl apply --dry-run=client --validate=false -f k8s/
+# Validate first (client-side dry-run against the cluster schema):
+kubectl -n crm-training apply --dry-run=client \
+  -f k8s/configmap.yaml -f k8s/deployment.yaml -f k8s/service.yaml -f k8s/ingress.yaml
 
-# Create the Secret out-of-band (never apply secret.example.yaml with real values):
-kubectl create secret generic crm-api-secrets -n <ns> \
+# Create the Secret out-of-band (never apply secret.example.yaml):
+kubectl -n crm-training create secret generic crm-api-secrets \
   --from-literal=CRM_DB_PASSWORD=... \
   --from-literal=CRM_AGENT_A_PASSWORD=... \
-  --from-literal=CRM_AGENT_B_PASSWORD=...
+  --from-literal=CRM_AGENT_B_PASSWORD=... \
+  --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl apply -f k8s/configmap.yaml -n <ns>
-kubectl apply -f k8s/deployment.yaml -n <ns>
-kubectl apply -f k8s/service.yaml -n <ns>
-kubectl apply -f k8s/ingress.yaml -n <ns>
-kubectl rollout status deployment/crm-api -n <ns>
+# Apply the listed files (not `-f k8s/`, which would apply secret.example.yaml):
+kubectl -n crm-training apply -f k8s/configmap.yaml
+kubectl -n crm-training apply -f k8s/deployment.yaml -f k8s/service.yaml -f k8s/ingress.yaml
+kubectl -n crm-training rollout status deployment/crm-api --timeout=180s
 ```
 
 ## Smoke
 
-- Health via Ingress: `curl -fsS https://crm-api.lab42.example.test/actuator/health/readiness` → `UP`
-- Customer `CUS-1001` with header `X-Correlation-Id: lab-request-001`
+Ingress host is sent as a Host header to the k3d load balancer on `127.0.0.1:8088`
+(no hosts-file entry needed):
+
+```bash
+curl -fsS -H "Host: crm-api.training.example.test" \
+  http://127.0.0.1:8088/actuator/health/readiness
+curl -fsS -u agent-a:<password> -H "Host: crm-api.training.example.test" \
+  -H "X-Correlation-Id: lab-request-001" \
+  "http://127.0.0.1:8088/api/customers?status=ACTIVE"
+```
 
 ## Rollback rehearsal
 
 ```bash
-# Introduce a bad revision (non-existent digest), watch it fail to become Ready:
-kubectl set image deployment/crm-api crm-api=crm-api@sha256:0000000000000000000000000000000000000000000000000000000000000000 -n <ns>
-kubectl rollout status deployment/crm-api -n <ns>   # will not complete
+# Bad revision: an image tag that will never pull, so the rollout stalls.
+kubectl -n crm-training set image deployment/crm-api crm-api=crm-api:does-not-exist
+kubectl -n crm-training rollout status deployment/crm-api --timeout=60s   # will not complete
+kubectl -n crm-training rollout history deployment/crm-api
 
 # Undo to the known-good revision:
-kubectl rollout undo deployment/crm-api -n <ns>
-kubectl rollout status deployment/crm-api -n <ns>
+kubectl -n crm-training rollout undo deployment/crm-api
+kubectl -n crm-training rollout status deployment/crm-api --timeout=180s
 ```
+
+## Residual risk / ownership
+
+- Secret rotation is owned out-of-band; the cluster Secret is the only place the real
+  passwords live, never Git.
+- `readOnlyRootFilesystem` stays false because Spring Boot writes temp files; revisit with
+  an emptyDir at /tmp if that hardening is required.

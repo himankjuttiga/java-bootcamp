@@ -5,11 +5,12 @@ metadata:
   labels:
     app: crm-api
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # k3s Traefik "web" entrypoint (HTTP :80), reached through the k3d load balancer on :8088.
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   ingressClassName: traefik
   rules:
-    - host: crm-api.lab42.example.test
+    - host: crm-api.training.example.test
       http:
         paths:
           - path: /
@@ -19,7 +20,3 @@ spec:
                 name: crm-api
                 port:
                   number: 80
-  # tls:
-  #   - hosts:
-  #       - crm-api.lab42.example.test
-  #     secretName: crm-api-tls
