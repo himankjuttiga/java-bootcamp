@@ -1,0 +1,20 @@
+{
+  "application": "crm-api",
+  "version": "0.0.1",
+  "gitCommit": "d1f4ce39e8c9cb49c323143d1d84a03f9ccaafc5",
+  "jarSha256": "1679689d647e2742f90e35fd09d3a35e470395f4d1782ae7098a024919c2b301",
+  "imageRepository": null,
+  "imageDigest": null,
+  "lab42ImageId": "sha256:cb27c69bdb37a9e36dde3f64fa3f6138f1ffe28031340e25bdb0bb5b312f6a2e",
+  "builtBy": "lab43-ci",
+  "knownGoodPrevious": {
+    "jarSha256": null,
+    "version": "none (first release)"
+  },
+  "environments": {
+    "test": { "promoted": false, "smoke": "Lab 43 verify green (CRM CI run on main, commit d1f4ce3)" },
+    "staging": { "promoted": false, "smoke": "GET /api/customers?status=ACTIVE + lab-request-001" },
+    "production": { "promoted": false, "approval": "GitHub Environment required reviewer, not yet promoted" }
+  },
+  "notes": "Never put passwords, tokens, or kubeconfig here. imageDigest stays null unless you actually pushed a registry image. Do not invent ghcr.io/@sha256. lab42ImageId is the local crm-api:lab41 image built for Lab 42 k3d."
+}
