@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: crm-api
+  labels:
+    app: crm-api
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: crm-api.lab42.example.test
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: crm-api
+                port:
+                  number: 80
+  # tls:
+  #   - hosts:
+  #       - crm-api.lab42.example.test
+  #     secretName: crm-api-tls

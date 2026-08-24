@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crm-api-config
+  labels:
+    app: crm-api
+    lab: "42"
+data:
+  # Non-secret config only. Passwords live in the Secret (crm-api-secrets).
+  SPRING_PROFILES_ACTIVE: "docker"
+  SERVER_PORT: "8080"
+  CRM_DB_HOST: "crm-postgres"
+  CRM_DB_PORT: "5432"
+  CRM_DB_NAME: "crm_lab40"
+  CRM_DB_USER: "crm"

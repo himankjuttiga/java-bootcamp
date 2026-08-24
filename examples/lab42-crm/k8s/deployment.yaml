@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crm-api
+  labels:
+    app: crm-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crm-api
+  template:
+    metadata:
+      labels:
+        app: crm-api
+    spec:
+      containers:
+        - name: crm-api
+          # Digest-pinned image from Lab 41 (not :latest)
+          image: crm-api@sha256:707a818adce2900b1aa0f0158cd1dd7fa1c1a961914fefe0476672ff069abe21
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: crm-api-config
+            # DB + agent passwords: Secret created out-of-band, never from Git
+            - secretRef:
+                name: crm-api-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Three distinct probes: startup gates slow boot, readiness gates traffic, liveness restarts.
+          startupProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
