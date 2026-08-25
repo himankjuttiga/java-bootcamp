@@ -1,0 +1,29 @@
+---
+# Lab 45 — Ansible site sketch (idempotent config for CRM host)
+# Every task declares desired state, so a second run reports changed=0.
+# OS user is crm — not crm_app. Do not embed DB passwords (Labs 41–44 use Postgres user crm).
+
+- name: Northstar CRM host baseline
+  hosts: crm
+  become: true
+  gather_facts: true
+  vars:
+    crm_user: crm
+    jre_package: default-jre
+  tasks:
+    - name: Ensure crm group exists
+      ansible.builtin.group:
+        name: "{{ crm_user }}"
+        state: present
+
+    - name: Ensure crm user exists
+      ansible.builtin.user:
+        name: "{{ crm_user }}"
+        group: "{{ crm_user }}"
+        state: present
+        create_home: true
+
+    - name: Ensure a JRE is installed (idempotent; state present is a no-op once satisfied)
+      ansible.builtin.package:
+        name: "{{ jre_package }}"
+        state: present

@@ -1,0 +1,12 @@
+# Example inventory at lab root (sibling of infra/). Never commit production IPs or secrets.
+all:
+  children:
+    crm:
+      hosts:
+        crm-dev-01:
+          ansible_host: 127.0.0.1
+          ansible_user: crm
+          # Example host only. Syntax-check unless an instructor authorizes a real host.
+      vars:
+        environment: dev
+        ansible_become_method: sudo

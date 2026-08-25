@@ -1,0 +1,10 @@
+# Terraform working files and state — never commit
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Real variable files (keep only the .example)
+*.tfvars
+!*.tfvars.example
